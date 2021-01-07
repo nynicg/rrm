@@ -54,15 +54,16 @@ func (s *Handle) Remove(id string) bool {
 type FilterFunc func(id string, req *http.Request) bool
 
 type Enforcer interface {
-	Enforce(id ,method ,path string) bool
+	Enforce(id, method, path string) bool
 	EnforceReq(id string, req *http.Request) bool
 	Grant(id, method, path string)
 	AppendFilter(f ...FilterFunc)
+	Reset()
 }
 
 type StdEnforcer struct {
-	router *router
-	filters       []FilterFunc
+	router  *router
+	filters []FilterFunc
 }
 
 func (s *StdEnforcer) AppendFilter(f ...FilterFunc) {
@@ -89,7 +90,13 @@ func (s *StdEnforcer) Grant(id string, method string, path string) {
 	}
 }
 
-func (s *StdEnforcer) Enforce(id string, method ,path string) bool {
+// Reset clear all permission
+func (s *StdEnforcer) Reset() {
+	s.router = newRouter()
+}
+
+// Enforce will not call filter func chain.
+func (s *StdEnforcer) Enforce(id string, method, path string) bool {
 	h, _, rd := s.router.lookup(method, path)
 	if rd {
 		h, _, _ = s.router.lookup(method, path+"/")
@@ -106,5 +113,5 @@ func (s *StdEnforcer) EnforceReq(id string, req *http.Request) bool {
 			return true
 		}
 	}
-	return s.Enforce(id ,req.Method ,req.URL.Path)
+	return s.Enforce(id, req.Method, req.URL.Path)
 }

@@ -50,4 +50,6 @@ func TestRouter_GET(t *testing.T) {
 			t.Fail()
 		}
 	}
+	en.Reset()
+	t.Log(en.Enforce("root" ,"GET" ,"/"))
 }
