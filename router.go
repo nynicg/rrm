@@ -316,7 +316,6 @@ func (r *router) Handle(method, path string, handle *Handle) {
 	}
 }
 
-
 func (r *router) recv(w http.ResponseWriter, req *http.Request) {
 	if rcv := recover(); rcv != nil {
 		r.PanicHandler(w, req, rcv)

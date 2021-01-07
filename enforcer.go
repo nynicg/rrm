@@ -10,16 +10,16 @@ type Handle struct {
 	sync.Mutex
 }
 
-func newHandle() *Handle{
+func newHandle() *Handle {
 	return &Handle{
-		m:      make(map[string]struct{}),
+		m: make(map[string]struct{}),
 	}
 }
 
 func (s *Handle) Contain(id string) bool {
 	s.Lock()
 	defer s.Unlock()
-	_ ,ok := s.m[id]
+	_, ok := s.m[id]
 	return ok
 }
 
@@ -30,10 +30,10 @@ func (s *Handle) Clear() {
 }
 
 // Add return whether key exists before Add()
-func (s *Handle) Add(id string) bool{
+func (s *Handle) Add(id string) bool {
 	s.Lock()
 	defer s.Unlock()
-	_ ,ok := s.m[id]
+	_, ok := s.m[id]
 	if !ok {
 		s.m[id] = struct{}{}
 	}
@@ -41,69 +41,70 @@ func (s *Handle) Add(id string) bool{
 }
 
 // Remove return whether key exists before Remove()
-func (s *Handle) Remove(id string) bool{
+func (s *Handle) Remove(id string) bool {
 	s.Lock()
 	defer s.Unlock()
-	_ ,ok := s.m[id]
+	_, ok := s.m[id]
 	if ok {
-		delete(s.m ,id)
+		delete(s.m, id)
 	}
 	return ok
 }
 
-
 type FilterFunc func(id string, req *http.Request) bool
 
-
 type Enforcer interface {
-	Enforce(id string,req *http.Request) bool
-	Grant(id ,method ,path string)
+	Enforce(id ,method ,path string) bool
+	EnforceReq(id string, req *http.Request) bool
+	Grant(id, method, path string)
 	AppendFilter(f ...FilterFunc)
 }
 
 type StdEnforcer struct {
-	router		*router
-	// route request /v1 to /v1/
-	allowRedirect	bool
-	filters []FilterFunc
+	router *router
+	filters       []FilterFunc
 }
 
 func (s *StdEnforcer) AppendFilter(f ...FilterFunc) {
-	s.filters = append(s.filters ,f...)
+	s.filters = append(s.filters, f...)
 }
 
-func NewStdEnforcer() Enforcer{
+func NewStdEnforcer() Enforcer {
 	return &StdEnforcer{
 		router: newRouter(),
 	}
 }
 
-func (s *StdEnforcer) Grant(id string ,method string ,path string){
-	h ,_ ,rd := s.router.lookup(method ,path)
+func (s *StdEnforcer) Grant(id string, method string, path string) {
+	h, _, rd := s.router.lookup(method, path)
 	if rd {
-		h ,_ ,_ = s.router.lookup(method ,path + "/")
+		h, _, _ = s.router.lookup(method, path+"/")
 	}
-	if h == nil{
+	if h == nil {
 		h = newHandle()
 		h.Add(id)
-		s.router.Handle(method ,path ,h)
-	}else {
+		s.router.Handle(method, path, h)
+	} else {
 		h.Add(id)
 	}
 }
 
-func (s *StdEnforcer) Enforce(id string, req *http.Request) bool {
-	for _ ,flt := range s.filters{
-		if flt(id ,req){
-			return true
-		}
-	}
-	h ,_ ,rd := s.router.lookup(req.Method ,req.URL.Path)
+func (s *StdEnforcer) Enforce(id string, method ,path string) bool {
+	h, _, rd := s.router.lookup(method, path)
 	if rd {
-		h ,_ ,_ = s.router.lookup(req.Method ,req.URL.Path + "/")
+		h, _, _ = s.router.lookup(method, path+"/")
 	}
 	if h == nil {
 		return false
 	}
 	return h.Contain(id)
+}
+
+func (s *StdEnforcer) EnforceReq(id string, req *http.Request) bool {
+	for _, flt := range s.filters {
+		if flt(id, req) {
+			return true
+		}
+	}
+	return s.Enforce(id ,req.Method ,req.URL.Path)
 }
