@@ -5,6 +5,12 @@ import (
 	"sync"
 )
 
+var methods []string
+
+func init(){
+	methods = []string{http.MethodGet ,http.MethodPost ,http.MethodPut ,http.MethodDelete ,http.MethodOptions}
+}
+
 type Handle struct {
 	m map[string]struct{}
 	sync.Mutex
@@ -76,7 +82,16 @@ func NewStdEnforcer() Enforcer {
 	}
 }
 
+
+
+// Grant method '*' == all http method.Use '/*any' to match any path
 func (s *StdEnforcer) Grant(id string, method string, path string) {
+	if method == "*" {
+		for _ ,v := range methods{
+			s.Grant(id ,v ,path)
+		}
+		return
+	}
 	h, _, rd := s.router.lookup(method, path)
 	if rd {
 		h, _, _ = s.router.lookup(method, path+"/")

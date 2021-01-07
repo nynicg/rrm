@@ -40,7 +40,7 @@ func TestRouter_GET(t *testing.T) {
 	en := NewStdEnforcer()
 	en.Grant("root", "GET", "/*any")
 	en.Grant("common", "POST", "/v1/log")
-	en.Grant("common", "DELETE", "/v1/file/:id")
+	en.Grant("common", "*", "/v1/file/:id")
 	en.AppendFilter(func(id string, req *http.Request) bool {
 		return id == "icg" && req.Method == http.MethodOptions
 	})
