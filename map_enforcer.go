@@ -78,6 +78,8 @@ func (m *RestEnforcer) find(id string, method, path string) bool {
 	return idm != nil && idm.Contain(id)
 }
 
+// Grant
+//  en.Grant("uid" ,http.MethodGet ,"/:userID")
 func (m *RestEnforcer) Grant(id, method, path string) {
 	if method == "*" {
 		for _, v := range methods {
@@ -85,6 +87,7 @@ func (m *RestEnforcer) Grant(id, method, path string) {
 		}
 		return
 	}
+	path = trimSuffix(path)
 	a := restAuth{
 		method: method,
 		path:   path,
@@ -97,6 +100,17 @@ func (m *RestEnforcer) Grant(id, method, path string) {
 	}
 	idm[id] = struct{}{}
 	m.auths[a] = idm
+}
+
+
+func trimSuffix(path string) string{
+	if i := strings.Index(path ,"/*");i != -1 {
+		return path[:i+2]
+	}
+	if i := strings.Index(path ,"/:");i != -1 {
+		return path[:i+2]
+	}
+	return path
 }
 
 func (m *RestEnforcer) AppendFilter(f ...Filter) {

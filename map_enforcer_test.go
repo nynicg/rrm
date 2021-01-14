@@ -32,13 +32,29 @@ func TestRestEnforcer_Enforce(t *testing.T) {
 	t.Log(en.Enforce("root", newMock("GET", "/123")))
 	t.Log(en.Enforce("root", newMock("GET", "/123/")))
 
-	en.Grant("rrm", "GET", "/*")
+	en.Grant("rrm", "GET", "/*any")
 	t.Log(en.Enforce("rrm", newMock("GET", "/")))
 	t.Log(en.Enforce("rrm", newMock("GET", "/123")))
 	t.Log(en.Enforce("rrm", newMock("GET", "/123/")))
 
-	en.Grant("rrm2", "GET", "/:")
+	en.Grant("rrm2", "GET", "/:any")
 	t.Log(en.Enforce("rrm2", newMock("GET", "/")))
 	t.Log(en.Enforce("rrm2", newMock("GET", "/123")))
 	t.Log(en.Enforce("rrm2", newMock("GET", "/123/")))
+}
+
+func TestRestEnforcer_trimSuffix(t *testing.T){
+	t.Log(trimSuffix("/"))
+	t.Log(trimSuffix("/:id"))
+	t.Log(trimSuffix("/*id"))
+	t.Log(trimSuffix("/*"))
+	t.Log(trimSuffix("/123"))
+	t.Log(trimSuffix("/123*idd"))
+	t.Log(trimSuffix("/123:idd"))
+	t.Log(trimSuffix("/123/"))
+	t.Log(trimSuffix("/123/*idd"))
+	t.Log(trimSuffix("/123/:idd"))
+	t.Log(trimSuffix("/123/123"))
+
+	t.Log(trimSuffix("/:userID/:repo"))
 }
