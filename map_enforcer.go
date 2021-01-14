@@ -25,6 +25,13 @@ type RestEnforcer struct {
 	fsmu  sync.Mutex
 }
 
+func NewRestEnforcer() Enforcer {
+	return &RestEnforcer{
+		fs:    []Filter{},
+		auths: make(map[restAuth]idmap),
+	}
+}
+
 func (m *RestEnforcer) Enforce(id string, req *http.Request) bool {
 	for _, f := range m.fs {
 		abort, ok := f(id, req)
